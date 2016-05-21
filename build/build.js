@@ -1,4 +1,15 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.castHelper = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.default = function (message) {
+  console.log("onError: " + JSON.stringify(message));
+};
+
+},{}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28,7 +39,18 @@ function extend(base) {
   return res;
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+exports.default = function (message) {
+  console.log("onSuccess: " + JSON.stringify(message));
+};
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 var _sender = require('./lib/sender');
@@ -47,17 +69,7 @@ module.exports = {
   receiver: _receiver2.default
 };
 
-},{"./lib/receiver":3,"./lib/sender":4}],3:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var receiver = {};
-
-exports.default = receiver;
-
-},{}],4:[function(require,module,exports){
+},{"./lib/receiver":5,"./lib/sender":6}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -68,19 +80,100 @@ var _extend = require('../helpers/extend');
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _successHandler = require('../helpers/successHandler');
+
+var _successHandler2 = _interopRequireDefault(_successHandler);
+
+var _errorHandler = require('../helpers/errorHandler');
+
+var _errorHandler2 = _interopRequireDefault(_errorHandler);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var debugState = false; /* global cast, castReceiverManager */
+
+var sendMessage = function sendMessage(msg) {
+  if (debugState) {
+    // eslint-disable-next-line
+    console.log(msg);
+  }
+};
+
+var noop = function noop() {};
+
+var receiver = {
+  create: function create(userOpts, debug) {
+    var defaults = {
+      namespace: 'urn:x-cast:com.wiljan.test',
+      onError: debug ? _errorHandler2.default : noop,
+      onSuccess: debug ? _successHandler2.default : noop,
+      onReady: debug ? _successHandler2.default : this.onReady,
+      onSenderConnected: debug ? _successHandler2.default : noop,
+      onSenderDisconnected: debug ? _successHandler2.default : noop,
+      onSystemVolumeChanged: debug ? _successHandler2.default : noop,
+      onMessage: debug ? _successHandler2.default : this.onMessage
+    };
+
+    this.opts = (0, _extend2.default)({}, defaults, userOpts);
+
+    debugState = debug;
+
+    cast.receiver.logger.setLevelValue(0);
+
+    this.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+
+    sendMessage('Starting Receiver Manager');
+
+    this.castReceiverManager.onReady = this.opts.onReady;
+    this.castReceiverManager.onSenderConnected = this.opts.onSenderConnected;
+    this.castReceiverManager.onSenderDisconnected = this.opts.onSenderDisconnected;
+    this.castReceiverManager.onSystemVolumeChanged = this.opts.onSystemVolumeChanged;
+
+    // create a CastMessageBus to handle messages for a custom namespace
+    this.messageBus = this.castReceiverManager.getCastMessageBus(this.opts.namespace);
+
+    // handler for the CastMessageBus message event
+    this.messageBus.onMessage = this.onMessage;
+
+    // Initialize the CastReceiverManager with an application status message
+    this.castReceiverManager.start({ statusText: 'Application is starting' });
+
+    sendMessage('Receiver Manager started');
+  },
+  onReady: function onReady() {
+    this.castReceiverManager.setApplicationState('Application status is ready...');
+  },
+  onMessage: function onMessage(event) {
+    sendMessage('Message [' + event.senderId + ']: ' + event.data);
+  }
+};
+
+exports.default = receiver;
+
+},{"../helpers/errorHandler":1,"../helpers/extend":2,"../helpers/successHandler":3}],6:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extend = require('../helpers/extend');
+
+var _extend2 = _interopRequireDefault(_extend);
+
+var _successHandler = require('../helpers/successHandler');
+
+var _successHandler2 = _interopRequireDefault(_successHandler);
+
+var _errorHandler = require('../helpers/errorHandler');
+
+var _errorHandler2 = _interopRequireDefault(_errorHandler);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var noop = function noop() {}; /* globals chrome */
 
 var session = void 0;
-
-var errorHandler = function errorHandler(message) {
-  console.log('onError: ' + JSON.stringify(message));
-};
-
-var successHandler = function successHandler(message) {
-  console.log('onSuccess: ' + JSON.stringify(message));
-};
 
 var sender = {
   create: function create(userOpts) {
@@ -91,13 +184,13 @@ var sender = {
     var defaults = {
       namespace: 'urn:x-cast:com.wiljan.test',
       applicationID: '12345678',
-      onError: debug ? errorHandler : noop,
-      onSuccess: debug ? successHandler : noop,
-      onInitSuccess: debug ? successHandler : noop,
-      onStopAppSuccess: debug ? successHandler : noop,
-      onSessionSuccess: debug ? successHandler : noop,
-      onReceiversSuccess: debug ? successHandler : noop,
-      onReceiversError: debug ? successHandler : noop
+      onError: debug ? _errorHandler2.default : noop,
+      onSuccess: debug ? _successHandler2.default : noop,
+      onInitSuccess: debug ? _successHandler2.default : noop,
+      onStopAppSuccess: debug ? _successHandler2.default : noop,
+      onSessionSuccess: debug ? _successHandler2.default : noop,
+      onReceiversSuccess: debug ? _successHandler2.default : noop,
+      onReceiversError: debug ? _successHandler2.default : noop
     };
 
     this.opts = (0, _extend2.default)({}, defaults, userOpts);
@@ -231,7 +324,7 @@ var sender = {
 
 exports.default = sender;
 
-},{"../helpers/extend":1}]},{},[2])(2)
+},{"../helpers/errorHandler":1,"../helpers/extend":2,"../helpers/successHandler":3}]},{},[4])(4)
 });
 
 

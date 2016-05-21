@@ -1,0 +1,27 @@
+<!doctype html>
+<html class="no-js" lang="nl">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+        <title>Receiver</title>
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body style="background: blue">
+        <h1 style="color: #fff">
+          Hello world!
+        </h1>
+
+        <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+        <script type="text/javascript" src="../build/build.js"></script>
+
+        <script type="text/javascript">
+          castHelper.receiver.create({
+            namespace: 'urn:x-cast:com.wiljan.test'
+          }, true);
+        </script>
+    </body>
+</html>

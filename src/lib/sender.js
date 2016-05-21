@@ -1,18 +1,12 @@
 /* globals chrome */
 
 import extend from '../helpers/extend';
+import successHandler from '../helpers/successHandler';
+import errorHandler from '../helpers/errorHandler';
 
 const noop = () => {};
 
 let session;
-
-const errorHandler = (message) => {
-  console.log(`onError: ${JSON.stringify(message)}`);
-};
-
-const successHandler = (message) => {
-  console.log(`onSuccess: ${JSON.stringify(message)}`);
-};
 
 const sender = {
   create(userOpts, debug = false) {

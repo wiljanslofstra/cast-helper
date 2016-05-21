@@ -25,6 +25,31 @@ After the setup has been done we can send messages to the receiver to start the 
 </button>
 ```
 
+### Receiver
+```html
+<!-- Load receiver script -->
+<script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+
+<!-- Load this library -->
+<script type="text/javascript" src="cast-helper.js"></script>
+
+<!-- Create the receiver -->
+<script type="text/javascript">
+  castHelper.receiver.create({
+    namespace: 'urn:x-cast:com.namespace.test'
+  }, true);
+</script>
+```
+We can receive and use messages from the sender with the onMessage callback:
+```javascript
+castHelper.receiver.create({
+  namespace: 'urn:x-cast:com.namespace.test',
+  onMessage: function(message) {
+    console.log(message);
+  }
+}, true);
+```
+
 ## Methods
 ```javascript
 // Initialize the Cast API
@@ -38,6 +63,9 @@ castHelper.sender.launch()
 
 // Stop the session
 castHelper.sender.stop()
+
+// Create the receiver
+castHelper.receiver.create(Options, Debug)
 ```
 
 ## Options
@@ -58,5 +86,17 @@ castHelper.sender.stop()
   onSessionSuccess: function() {},
   onReceiversSuccess: function() {},
   onReceiversError: function() {},
+},
+
+// Receiver options
+{
+  namespace: 'urn:x-cast:com.wiljan.test',
+  onError: function() {},
+  onSuccess: function() {},
+  onReady: function() {},
+  onSenderConnected: function() {},
+  onSenderDisconnected: function() {},
+  onSystemVolumeChanged: function({ data: { level: Integer, muted: Boolean }}) {},
+  onMessage: function(message) {},
 }
 ```
